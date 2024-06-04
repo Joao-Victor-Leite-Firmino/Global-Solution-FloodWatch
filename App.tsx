@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, Button, Alert } from 'react-native';
+import { StyleSheet, Text, View, Button, Alert, Dimensions } from 'react-native';
 import * as Location from 'expo-location';
+import MapView, { Marker } from 'react-native-maps';
 import axios from 'axios';
 
 export default function App() {
@@ -47,7 +48,28 @@ export default function App() {
 
   return (
     <View style={styles.container}>
-      <Text>Aplicativo de Alerta de Enchentes</Text>
+      <Text style={styles.title}>Aplicativo de Alerta de Enchentes</Text>
+      {location ? (
+        <MapView
+          style={styles.map}
+          initialRegion={{
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude,
+            latitudeDelta: 0.0922,
+            longitudeDelta: 0.0421,
+          }}
+        >
+          <Marker
+            coordinate={{
+              latitude: location.coords.latitude,
+              longitude: location.coords.longitude,
+            }}
+            title={"Você está aqui"}
+          />
+        </MapView>
+      ) : (
+        <Text>Obtendo localização...</Text>
+      )}
       <Button title="Verificar Risco de Enchente" onPress={checkFloodRisk} />
       {floodRisk && <Text style={styles.warning}>Risco de Enchente: {floodRisk}</Text>}
     </View>
@@ -60,6 +82,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  title: {
+    fontSize: 20,
+    marginBottom: 20,
+  },
+  map: {
+    width: Dimensions.get('window').width,
+    height: Dimensions.get('window').height * 0.6,
   },
   warning: {
     marginTop: 20,
