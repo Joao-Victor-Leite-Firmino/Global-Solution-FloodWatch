@@ -1,80 +1,62 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, Button, Alert, Dimensions } from 'react-native';
-import * as Location from 'expo-location';
-import MapView, { Marker } from 'react-native-maps';
-import axios from 'axios';
+import { SafeAreaView, StyleSheet, Text, View, ActivityIndicator } from 'react-native';
+import LocationList from './components/LocationList';
+import SQLite from 'react-native-sqlite-storage';
 
-export default function App() {
-  const [location, setLocation] = useState(null);
-  const [floodRisk, setFloodRisk] = useState(null);
+const App = () => {
+  const [locations, setLocations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    (async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Permissão negada', 'Permissão de localização é necessária para o funcionamento do aplicativo.');
-        return;
-      }
+    const db = SQLite.openDatabase({ name: 'locations.db', createFromLocation: 1 });
 
-      let location = await Location.getCurrentPositionAsync({});
-      setLocation(location);
-    })();
+    db.transaction(tx => {
+      tx.executeSql(
+        'SELECT * FROM locations',
+        [],
+        (tx, results) => {
+          const rows = results.rows.raw();
+          console.log('Locations:', rows);
+          setLocations(rows);
+          setError(null);
+        },
+        error => {
+          console.error('Error fetching data:', error);
+          setError('Erro ao carregar os dados');
+        }
+      );
+    });
+
+    db.close(() => {
+      setLoading(false);
+      console.log('Loading complete');
+    });
   }, []);
 
-  const checkFloodRisk = async () => {
-    if (!location) {
-      Alert.alert('Localização não encontrada', 'Não foi possível obter a localização.');
-      return;
-    }
+  if (loading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    );
+  }
 
-    try {
-      // Substitua pela URL da API de previsão de IA
-      const response = await axios.post('https://api.exemplo.com/predict-flood', {
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude
-      });
-
-      if (response.data.floodRisk) {
-        setFloodRisk(response.data.floodRisk);
-        Alert.alert('Alerta de Enchente', 'Há um risco de enchente na sua área!');
-      } else {
-        setFloodRisk(null);
-        Alert.alert('Sem Risco de Enchente', 'Não há risco de enchente na sua área.');
-      }
-    } catch (error) {
-      Alert.alert('Erro', 'Não foi possível obter a previsão de enchente.');
-    }
-  };
+  if (error) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>{error}</Text>
+      </View>
+    );
+  }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Aplicativo de Alerta de Enchentes</Text>
-      {location ? (
-        <MapView
-          style={styles.map}
-          initialRegion={{
-            latitude: location.coords.latitude,
-            longitude: location.coords.longitude,
-            latitudeDelta: 0.0922,
-            longitudeDelta: 0.0421,
-          }}
-        >
-          <Marker
-            coordinate={{
-              latitude: location.coords.latitude,
-              longitude: location.coords.longitude,
-            }}
-            title={"Você está aqui"}
-          />
-        </MapView>
-      ) : (
-        <Text>Obtendo localização...</Text>
-      )}
-      <Button title="Verificar Risco de Enchente" onPress={checkFloodRisk} />
-      {floodRisk && <Text style={styles.warning}>Risco de Enchente: {floodRisk}</Text>}
-    </View>
+    <SafeAreaView style={styles.container}>
+      <Text style={styles.header}>Probabilidade de Enchente</Text>
+      <LocationList locations={locations} />
+    </SafeAreaView>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -83,17 +65,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  title: {
-    fontSize: 20,
-    marginBottom: 20,
+  header: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    margin: 20,
   },
-  map: {
-    width: Dimensions.get('window').width,
-    height: Dimensions.get('window').height * 0.6,
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  warning: {
-    marginTop: 20,
-    color: 'red',
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  errorText: {
     fontSize: 18,
+    color: 'red',
+    textAlign: 'center',
   },
 });
+
+export default App;
