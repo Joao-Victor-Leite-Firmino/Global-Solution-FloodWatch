@@ -1,64 +1,35 @@
-import React, { useEffect, useState } from 'react';
-import { SafeAreaView, StyleSheet, Text, View, ActivityIndicator, Button } from 'react-native';
+import React from 'react';
+import { SafeAreaView, StyleSheet, Text, Button } from 'react-native';
+import { ProvedorEstadoGlobal, useEstadoGlobal } from './hooks/EstadoGlobal';
 import LocationList from './components/LocationList';
+import { View } from 'native-base';
 
-const App = () => {
-  const [locations, setLocations] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    fetchLocations();
-  }, []);
-
-  const fetchLocations = async () => {
-    try {
-      const response = await fetch('http://localhost:3000/locations');
-      if (!response.ok) {
-        throw new Error(`Erro ao buscar os locais: ${response.status} - ${response.statusText}`);
-      }
-      const data = await response.json();
-      console.log('Dados recebidos:', data); 
-      setLocations(data);
-      setError(null);
-    } catch (error) {
-      console.error('Erro ao buscar os locais:', error); 
-      setError('Erro ao buscar os locais');
-    } finally {
-      setLoading(false);
-    }
-  };
+const AppContent = () => {
+  const { carregarLocais, adicionarLocal } = useEstadoGlobal();
 
   const handleRefresh = () => {
-    setLoading(true);
-    fetchLocations();
+    carregarLocais();
   };
 
-  if (loading) {
-    return (
-      <View style={styles.loaderContainer}>
-        <ActivityIndicator size="large" color="#0000ff" />
-      </View>
-    );
-  }
-
-  if (error) {
-    return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>{error}</Text>
-        <Button title="Tentar Novamente" onPress={handleRefresh} />
-      </View>
-    );
-  }
+  const handleAddLocation = () => {
+    adicionarLocal('Nome do Local', 'Nível de Risco');
+  };
 
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.header}>Probabilidade de Enchente</Text>
-      <LocationList locations={locations} />
-      <Button title="Atualizar" onPress={handleRefresh} />
+      <LocationList />
+      <view style={styles.view}><Button title="Atualizar" onPress={handleRefresh} /></view>
+      <Button title="Adicionar Local" onPress={handleAddLocation} />
     </SafeAreaView>
   );
 };
+
+const App = () => (
+  <ProvedorEstadoGlobal>
+    <AppContent />
+  </ProvedorEstadoGlobal>
+);
 
 const styles = StyleSheet.create({
   container: {
@@ -71,23 +42,12 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     margin: 20,
+    textAlign: 'center',
   },
-  loaderContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  errorText: {
-    fontSize: 22,
-    color: 'red',
-    fontWeight: 'bold',
-    marginBottom: '2%',
-  },
+  view: {
+    marginBottom: "5%",
+  }
 });
 
 export default App;
+

@@ -1,12 +1,15 @@
 import React from 'react';
-import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { FlatList, StyleSheet, View } from 'react-native';
 import LocationItem from './LocationItem';
+import { useEstadoGlobal } from '../hooks/EstadoGlobal';
 
-const LocationList = ({ locations }) => {
+const LocationList = () => {
+  const { locais } = useEstadoGlobal();
+
   return (
     <View style={styles.listContainer}>
       <FlatList
-        data={locations}
+        data={locais}
         renderItem={({ item }) => <LocationItem location={item} />}
         keyExtractor={item => item.id.toString()}
       />
@@ -22,3 +25,4 @@ const styles = StyleSheet.create({
 });
 
 export default LocationList;
+
