@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { SafeAreaView, StyleSheet, Text, View, ActivityIndicator } from 'react-native';
+import { SafeAreaView, StyleSheet, Text, View, ActivityIndicator, Button } from 'react-native';
 import LocationList from './components/LocationList';
-import SQLite from 'react-native-sqlite-storage';
 
 const App = () => {
   const [locations, setLocations] = useState([]);
@@ -9,30 +8,31 @@ const App = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const db = SQLite.openDatabase({ name: 'locations.db', createFromLocation: 1 });
-
-    db.transaction(tx => {
-      tx.executeSql(
-        'SELECT * FROM locations',
-        [],
-        (tx, results) => {
-          const rows = results.rows.raw();
-          console.log('Locations:', rows);
-          setLocations(rows);
-          setError(null);
-        },
-        error => {
-          console.error('Error fetching data:', error);
-          setError('Erro ao carregar os dados');
-        }
-      );
-    });
-
-    db.close(() => {
-      setLoading(false);
-      console.log('Loading complete');
-    });
+    fetchLocations();
   }, []);
+
+  const fetchLocations = async () => {
+    try {
+      const response = await fetch('http://localhost:3000/locations');
+      if (!response.ok) {
+        throw new Error(`Erro ao buscar os locais: ${response.status} - ${response.statusText}`);
+      }
+      const data = await response.json();
+      console.log('Dados recebidos:', data); 
+      setLocations(data);
+      setError(null);
+    } catch (error) {
+      console.error('Erro ao buscar os locais:', error); 
+      setError('Erro ao buscar os locais');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRefresh = () => {
+    setLoading(true);
+    fetchLocations();
+  };
 
   if (loading) {
     return (
@@ -46,6 +46,7 @@ const App = () => {
     return (
       <View style={styles.errorContainer}>
         <Text style={styles.errorText}>{error}</Text>
+        <Button title="Tentar Novamente" onPress={handleRefresh} />
       </View>
     );
   }
@@ -54,6 +55,7 @@ const App = () => {
     <SafeAreaView style={styles.container}>
       <Text style={styles.header}>Probabilidade de Enchente</Text>
       <LocationList locations={locations} />
+      <Button title="Atualizar" onPress={handleRefresh} />
     </SafeAreaView>
   );
 };
@@ -79,12 +81,12 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 20,
   },
   errorText: {
-    fontSize: 18,
+    fontSize: 22,
     color: 'red',
-    textAlign: 'center',
+    fontWeight: 'bold',
+    marginBottom: '2%',
   },
 });
 

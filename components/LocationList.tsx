@@ -1,5 +1,5 @@
 import React from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
 import LocationItem from './LocationItem';
 
 const LocationList = ({ locations }) => {
@@ -8,7 +8,7 @@ const LocationList = ({ locations }) => {
       <FlatList
         data={locations}
         renderItem={({ item }) => <LocationItem location={item} />}
-        keyExtractor={item => item.id}
+        keyExtractor={item => item.id.toString()}
       />
     </View>
   );
