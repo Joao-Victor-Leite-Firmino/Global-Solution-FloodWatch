@@ -6,7 +6,7 @@ const LocationItem = ({ location }) => {
   const { editarRisco, excluirLocal } = useEstadoGlobal();
 
   const handleEditRisk = () => {
-    editarRisco(location.id, 'Novo Risco');
+    editarRisco(location.id, 'Novo Risco'); 
   };
 
   const handleDelete = () => {
