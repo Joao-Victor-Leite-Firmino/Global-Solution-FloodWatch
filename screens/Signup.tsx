@@ -1,22 +1,33 @@
-// src/screens/Signup.js
+// screens/SignupScreen.js
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
+import { View, TextInput, Button, Text, StyleSheet } from 'react-native';
 import { useEstadoGlobal } from '../hooks/EstadoGlobal';
-import { useNavigation } from '@react-navigation/native';
 
-const Signup = () => {
-  const { signup } = useEstadoGlobal();
+const SignupScreen = ({ navigation }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const navigation = useNavigation();
+  const [role, setRole] = useState('');
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const { signup } = useEstadoGlobal();
 
-  const handleSignup = () => {
-    signup(username, password);
-    navigation.navigate('LocationList');
+  const handleSignup = async () => {
+    try {
+      await signup(username, password, role);
+      setSuccess('Usuário registrado com sucesso! Faça login para continuar.');
+      setError('');
+      setTimeout(() => {
+        navigation.navigate('Login');
+      }, 2000); // Redireciona para a tela de login após 2 segundos
+    } catch (err) {
+      setError(err.message || 'Erro ao fazer cadastro');
+      setSuccess('');
+    }
   };
 
   return (
     <View style={styles.container}>
+      <Text style={styles.title}>Cadastro</Text>
       <TextInput
         style={styles.input}
         placeholder="Username"
@@ -26,11 +37,22 @@ const Signup = () => {
       <TextInput
         style={styles.input}
         placeholder="Password"
-        secureTextEntry
         value={password}
         onChangeText={setPassword}
+        secureTextEntry
       />
-      <Button title="Sign Up" onPress={handleSignup} />
+      <TextInput
+        style={styles.input}
+        placeholder="Role"
+        value={role}
+        onChangeText={setRole}
+      />
+      <View style={styles.view}>
+      <Button title="Signup" onPress={handleSignup} />
+      </View>
+      <Button title="Login" onPress={() => navigation.navigate('Login')} />
+      {error ? <Text style={styles.error}>{error}</Text> : null}
+      {success ? <Text style={styles.success}>{success}</Text> : null}
     </View>
   );
 };
@@ -39,18 +61,38 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
-    padding: 10,
-    backgroundColor: '#fff',
+    padding: 16,
+  },
+  title: {
+    fontSize: 24,
+    marginBottom: 16,
+    textAlign: 'center',
   },
   input: {
     height: 40,
     borderColor: 'gray',
     borderWidth: 1,
-    marginBottom: 10,
-    width: '80%',
-    paddingHorizontal: 10,
+    marginBottom: 12,
+    paddingLeft: 8,
+  },
+  view: {
+    marginTop: "3%",
+    marginBottom: "3%"
+  },
+  error: {
+    color: 'red',
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  success: {
+    color: 'green',
+    marginTop: 8,
+    textAlign: 'center',
   },
 });
 
-export default Signup;
+export default SignupScreen;
+
+
+
+

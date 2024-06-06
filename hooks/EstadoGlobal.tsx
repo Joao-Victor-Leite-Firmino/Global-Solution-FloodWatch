@@ -1,3 +1,4 @@
+// hooks/EstadoGlobal.js
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 interface Local {
@@ -6,35 +7,42 @@ interface Local {
   risk: string;
 }
 
-interface User {
-  username: string;
-  password: string;
-}
-
 interface ContextoEstadoGlobal {
   locais: Local[];
+  user: User | null;
+  login: (username: string, password: string) => Promise<void>;
+  signup: (username: string, password: string, role: string) => Promise<void>;
+  logout: () => void;
+  carregarLocais: () => void;
   adicionarLocal: (name: string, risk: string) => void;
-  editarRisco: (id: number, novoRisco: string) => void;
+  editarRisco: (id: number, risk: string) => void;
   excluirLocal: (id: number) => void;
-  login: (username: string, password: string) => boolean;
-  signup: (username: string, password: string) => void;
+}
+
+interface User {
+  id: number;
+  username: string;
+  role: string;
+  token: string;
 }
 
 const ContextoEstadoGlobal = createContext<ContextoEstadoGlobal>({
   locais: [],
+  user: null,
+  login: async () => {},
+  signup: async () => {},
+  logout: () => {},
+  carregarLocais: () => {},
   adicionarLocal: () => {},
   editarRisco: () => {},
   excluirLocal: () => {},
-  login: () => false,
-  signup: () => {},
 });
 
 export const useEstadoGlobal = () => useContext(ContextoEstadoGlobal);
 
 export const ProvedorEstadoGlobal: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [locais, setLocais] = useState<Local[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
-  const [loggedInUser, setLoggedInUser] = useState<string | null>(null);
+  const [user, setUser] = useState<User | null>(null);
 
   const carregarLocais = async () => {
     try {
@@ -55,35 +63,37 @@ export const ProvedorEstadoGlobal: React.FC<{ children: React.ReactNode }> = ({ 
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`,
         },
         body: JSON.stringify({ name, risk }),
       });
       if (!response.ok) {
         throw new Error('Não foi possível adicionar o local');
       }
-      const data = await response.json();
-      setLocais([...locais, data]);
+      const newLocation = await response.json();
+      setLocais([...locais, newLocation]);
     } catch (error) {
       console.error('Erro ao adicionar o local:', error);
     }
   };
 
-  const editarRisco = async (id: number, novoRisco: string) => {
+  const editarRisco = async (id: number, risk: string) => {
     try {
       const response = await fetch(`http://localhost:3000/locations/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`,
         },
-        body: JSON.stringify({ risk: novoRisco }),
+        body: JSON.stringify({ risk }),
       });
       if (!response.ok) {
         throw new Error('Não foi possível editar o risco');
       }
-      const novoLocais = locais.map(local =>
-        local.id === id ? { ...local, risk: novoRisco } : local
+      const updatedLocation = locais.map(local =>
+        local.id === id ? { ...local, risk } : local
       );
-      setLocais(novoLocais);
+      setLocais(updatedLocation);
     } catch (error) {
       console.error('Erro ao editar o risco:', error);
     }
@@ -93,29 +103,61 @@ export const ProvedorEstadoGlobal: React.FC<{ children: React.ReactNode }> = ({ 
     try {
       const response = await fetch(`http://localhost:3000/locations/${id}`, {
         method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${user?.token}`,
+        },
       });
       if (!response.ok) {
         throw new Error('Não foi possível excluir o local');
       }
-      const novosLocais = locais.filter(local => local.id !== id);
-      setLocais(novosLocais);
+      setLocais(locais.filter(local => local.id !== id));
     } catch (error) {
       console.error('Erro ao excluir o local:', error);
     }
   };
 
-  const login = (username: string, password: string) => {
-    const user = users.find(user => user.username === username && user.password === password);
-    if (user) {
-      setLoggedInUser(username);
-      return true;
+  const login = async (username: string, password: string) => {
+    try {
+      const response = await fetch('http://localhost:3000/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password }),
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Erro ao realizar o login');
+      }
+      const { token, ...userData } = await response.json();
+      setUser({ ...userData, token });
+    } catch (error) {
+      console.error('Erro ao realizar o login:', error);
+      throw error;
     }
-    return false;
   };
 
-  const signup = (username: string, password: string) => {
-    setUsers([...users, { username, password }]);
-    setLoggedInUser(username);
+  const signup = async (username: string, password: string, role: string) => {
+    try {
+      const response = await fetch('http://localhost:3000/registro', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password, role }),
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Erro ao realizar o cadastro');
+      }
+    } catch (error) {
+      console.error('Erro ao realizar o cadastro:', error);
+      throw error;
+    }
+  };
+
+  const logout = () => {
+    setUser(null);
   };
 
   useEffect(() => {
@@ -123,8 +165,10 @@ export const ProvedorEstadoGlobal: React.FC<{ children: React.ReactNode }> = ({ 
   }, []);
 
   return (
-    <ContextoEstadoGlobal.Provider value={{ locais, adicionarLocal, editarRisco, excluirLocal, login, signup }}>
+    <ContextoEstadoGlobal.Provider value={{ locais, user, login, signup, logout, carregarLocais, adicionarLocal, editarRisco, excluirLocal }}>
       {children}
     </ContextoEstadoGlobal.Provider>
   );
 };
+
+
