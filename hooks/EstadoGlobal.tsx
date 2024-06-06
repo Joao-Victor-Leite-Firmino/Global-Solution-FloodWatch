@@ -6,12 +6,18 @@ interface Local {
   risk: string;
 }
 
+interface User {
+  username: string;
+  password: string;
+}
+
 interface ContextoEstadoGlobal {
   locais: Local[];
   adicionarLocal: (name: string, risk: string) => void;
   editarRisco: (id: number, novoRisco: string) => void;
   excluirLocal: (id: number) => void;
-  carregarLocais: () => void;
+  login: (username: string, password: string) => boolean;
+  signup: (username: string, password: string) => void;
 }
 
 const ContextoEstadoGlobal = createContext<ContextoEstadoGlobal>({
@@ -19,13 +25,16 @@ const ContextoEstadoGlobal = createContext<ContextoEstadoGlobal>({
   adicionarLocal: () => {},
   editarRisco: () => {},
   excluirLocal: () => {},
-  carregarLocais: () => {},
+  login: () => false,
+  signup: () => {},
 });
 
 export const useEstadoGlobal = () => useContext(ContextoEstadoGlobal);
 
 export const ProvedorEstadoGlobal: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [locais, setLocais] = useState<Local[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [loggedInUser, setLoggedInUser] = useState<string | null>(null);
 
   const carregarLocais = async () => {
     try {
@@ -33,7 +42,6 @@ export const ProvedorEstadoGlobal: React.FC<{ children: React.ReactNode }> = ({ 
       if (!response.ok) {
         throw new Error('Não foi possível carregar os locais');
       }
-
       const data = await response.json();
       setLocais(data);
     } catch (error) {
@@ -50,13 +58,11 @@ export const ProvedorEstadoGlobal: React.FC<{ children: React.ReactNode }> = ({ 
         },
         body: JSON.stringify({ name, risk }),
       });
-
       if (!response.ok) {
         throw new Error('Não foi possível adicionar o local');
       }
-
       const data = await response.json();
-      setLocais([...locais, { id: data.id, name, risk }]);
+      setLocais([...locais, data]);
     } catch (error) {
       console.error('Erro ao adicionar o local:', error);
     }
@@ -71,15 +77,13 @@ export const ProvedorEstadoGlobal: React.FC<{ children: React.ReactNode }> = ({ 
         },
         body: JSON.stringify({ risk: novoRisco }),
       });
-
       if (!response.ok) {
         throw new Error('Não foi possível editar o risco');
       }
-
-      const novosLocais = locais.map(local =>
+      const novoLocais = locais.map(local =>
         local.id === id ? { ...local, risk: novoRisco } : local
       );
-      setLocais(novosLocais);
+      setLocais(novoLocais);
     } catch (error) {
       console.error('Erro ao editar o risco:', error);
     }
@@ -90,11 +94,9 @@ export const ProvedorEstadoGlobal: React.FC<{ children: React.ReactNode }> = ({ 
       const response = await fetch(`http://localhost:3000/locations/${id}`, {
         method: 'DELETE',
       });
-
       if (!response.ok) {
         throw new Error('Não foi possível excluir o local');
       }
-
       const novosLocais = locais.filter(local => local.id !== id);
       setLocais(novosLocais);
     } catch (error) {
@@ -102,12 +104,26 @@ export const ProvedorEstadoGlobal: React.FC<{ children: React.ReactNode }> = ({ 
     }
   };
 
+  const login = (username: string, password: string) => {
+    const user = users.find(user => user.username === username && user.password === password);
+    if (user) {
+      setLoggedInUser(username);
+      return true;
+    }
+    return false;
+  };
+
+  const signup = (username: string, password: string) => {
+    setUsers([...users, { username, password }]);
+    setLoggedInUser(username);
+  };
+
   useEffect(() => {
     carregarLocais();
   }, []);
 
   return (
-    <ContextoEstadoGlobal.Provider value={{ locais, adicionarLocal, editarRisco, excluirLocal, carregarLocais }}>
+    <ContextoEstadoGlobal.Provider value={{ locais, adicionarLocal, editarRisco, excluirLocal, login, signup }}>
       {children}
     </ContextoEstadoGlobal.Provider>
   );
