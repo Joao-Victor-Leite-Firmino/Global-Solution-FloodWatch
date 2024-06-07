@@ -29,7 +29,7 @@ const LocationItem = ({ location }) => {
   const getBackgroundColor = (risk) => {
     switch (risk) {
       case 'Baixo nível':
-        return '#b3e5fc'; // Azul claro
+        return '#82d163'; // Verde
       case 'Médio nível':
         return '#ffeb3b'; // Amarelo
       case 'Alto nível':

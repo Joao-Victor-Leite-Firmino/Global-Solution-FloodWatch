@@ -1,4 +1,3 @@
-// screens/LoginScreen.js
 import React, { useState } from 'react';
 import { View, TextInput, Button, Text, StyleSheet } from 'react-native';
 import { useEstadoGlobal } from '../hooks/EstadoGlobal';
@@ -20,7 +19,7 @@ const LoginScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Login</Text>
+      <Text style={styles.title}>Bem vindo ao FloodWatch!</Text>
       <TextInput
         style={styles.input}
         placeholder="Username"
@@ -29,7 +28,7 @@ const LoginScreen = ({ navigation }) => {
       />
       <TextInput
         style={styles.input}
-        placeholder="Password"
+        placeholder="Senha"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
@@ -37,7 +36,7 @@ const LoginScreen = ({ navigation }) => {
       <View style={styles.view}>
       <Button title="Login" onPress={handleLogin} />
       </View>
-      <Button title="Signup" onPress={() => navigation.navigate('Signup')} />
+      <Button title="Cadastro" onPress={() => navigation.navigate('Signup')} />
       {error ? <Text style={styles.error}>{error}</Text> : null}
     </View>
   );
@@ -48,11 +47,14 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     padding: 16,
+    backgroundColor: '#b2e0f4',
   },
   title: {
     fontSize: 24,
     marginBottom: 16,
     textAlign: 'center',
+    paddingBottom: '3%',
+    fontWeight: 'bold',
   },
   input: {
     height: 40,
@@ -60,6 +62,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 12,
     paddingLeft: 8,
+    backgroundColor: '#fff',
   },
   view: {
     marginTop: "3%",

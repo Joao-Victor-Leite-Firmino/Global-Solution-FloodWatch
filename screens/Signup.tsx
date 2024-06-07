@@ -1,4 +1,3 @@
-// screens/SignupScreen.js
 import React, { useState } from 'react';
 import { View, TextInput, Button, Text, StyleSheet } from 'react-native';
 import { useEstadoGlobal } from '../hooks/EstadoGlobal';
@@ -36,19 +35,19 @@ const SignupScreen = ({ navigation }) => {
       />
       <TextInput
         style={styles.input}
-        placeholder="Password"
+        placeholder="Senha"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
       />
       <TextInput
         style={styles.input}
-        placeholder="Role"
+        placeholder="Cargo"
         value={role}
         onChangeText={setRole}
       />
       <View style={styles.view}>
-      <Button title="Signup" onPress={handleSignup} />
+      <Button title="Cadastro" onPress={handleSignup} />
       </View>
       <Button title="Login" onPress={() => navigation.navigate('Login')} />
       {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -62,11 +61,13 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     padding: 16,
+    backgroundColor: '#b2e0f4',
   },
   title: {
     fontSize: 24,
     marginBottom: 16,
     textAlign: 'center',
+    fontWeight: 'bold',
   },
   input: {
     height: 40,
@@ -74,6 +75,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 12,
     paddingLeft: 8,
+    backgroundColor: '#fff',
   },
   view: {
     marginTop: "3%",

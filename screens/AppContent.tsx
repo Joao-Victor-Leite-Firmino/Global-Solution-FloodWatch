@@ -51,7 +51,7 @@ const AppContent = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#b2e0f4',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -68,6 +68,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     width: '80%',
     paddingHorizontal: 10,
+    backgroundColor: '#fff',
   },
   picker: {
     height: 50,
